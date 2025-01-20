@@ -9,6 +9,13 @@ import os
 # Configuration de la page
 st.set_page_config(page_title="Visite de Copropriété ORPI", layout="wide")
 
+# Fonction pour nettoyer le texte des émojis
+def clean_text_for_pdf(text):
+    # Remplace les émojis par du texte
+    text = text.replace("✅ ", "")
+    text = text.replace("❌ ", "")
+    return text
+
 # Fonction pour créer le PDF
 def create_pdf(data, main_image_file, observations):
     pdf = FPDF()
@@ -24,22 +31,18 @@ def create_pdf(data, main_image_file, observations):
     pdf.set_text_color(0, 0, 0)  # Noir
     pdf.cell(0, 10, f"Date: {data['date']}", 0, 1)
     pdf.cell(0, 10, f"Adresse: {data['address']}", 0, 1)
-    pdf.cell(0, 10, f"Rédacteur: {data['redacteur']}", 0, 1)
+    pdf.cell(0, 10, f"Redacteur: {data['redacteur']}", 0, 1)
     pdf.cell(0, 10, f"Horaires: {data['arrival_time']} - {data['departure_time']}", 0, 1)
     pdf.cell(0, 10, f"Code Immeuble: {data['building_code']}", 0, 1)
     
     # Image principale
     if main_image_file is not None:
-        # Créer un fichier temporaire pour l'image
         temp_image_path = "temp_main_image.jpg"
         try:
-            # Sauvegarder l'image uploadée
             with open(temp_image_path, "wb") as f:
                 f.write(main_image_file.getvalue())
-            # Ajouter l'image au PDF
             pdf.image(temp_image_path, x=10, y=None, w=190)
         finally:
-            # Nettoyer le fichier temporaire
             if os.path.exists(temp_image_path):
                 os.remove(temp_image_path)
     
@@ -48,14 +51,17 @@ def create_pdf(data, main_image_file, observations):
     pdf.set_font('Arial', 'B', 14)
     pdf.cell(0, 10, 'Observations', 0, 1)
     
-    # Ajouter les observations
     for idx, obs in enumerate(observations):
         pdf.set_font('Arial', 'B', 12)
-        pdf.cell(0, 10, f"Observation {idx + 1} - {obs['type']}", 0, 1)
-        pdf.set_font('Arial', '', 12)
-        pdf.multi_cell(0, 10, obs['description'])
+        # Nettoyage du type d'observation pour le PDF
+        obs_type = "Positive" if "Positive" in obs['type'] else "Negative"
+        pdf.cell(0, 10, f"Observation {idx + 1} - {obs_type}", 0, 1)
         
-        # Ajouter la photo de l'observation si elle existe
+        pdf.set_font('Arial', '', 12)
+        # Nettoyage de la description pour le PDF
+        description = clean_text_for_pdf(obs['description'])
+        pdf.multi_cell(0, 10, description)
+        
         if obs['photo'] is not None:
             temp_obs_path = f"temp_obs_{idx}.jpg"
             try:
@@ -66,7 +72,7 @@ def create_pdf(data, main_image_file, observations):
                 if os.path.exists(temp_obs_path):
                     os.remove(temp_obs_path)
         
-        pdf.cell(0, 10, '', 0, 1)  # Ajouter un espace
+        pdf.cell(0, 10, '', 0, 1)
     
     return pdf
 
@@ -108,7 +114,7 @@ with col2:
         
         submit_button = st.form_submit_button("Ajouter l'observation")
         if submit_button:
-            if description:  # Vérifie qu'il y a au moins une description
+            if description:
                 st.session_state.observations.append({
                     "type": obs_type,
                     "description": description,
@@ -133,10 +139,9 @@ with col2:
 st.markdown("---")
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    if st.button("🔄 Générer le rapport PDF", use_container_width=True):
-        if address and building_code:  # Vérifie les champs obligatoires minimaux
+    if st.button("Générer le rapport PDF", use_container_width=True):
+        if address and building_code:
             with st.spinner("Génération du rapport en cours..."):
-                # Collecte des données
                 data = {
                     "date": date,
                     "address": address,
@@ -146,21 +151,19 @@ with col2:
                     "building_code": building_code
                 }
                 
-                # Création du PDF
                 try:
                     pdf = create_pdf(data, main_image, st.session_state.observations)
                     pdf_output = pdf.output(dest='S').encode('latin1')
                     
-                    # Téléchargement du PDF
                     st.download_button(
-                        label="📥 Télécharger le rapport PDF",
+                        label="Télécharger le rapport PDF",
                         data=pdf_output,
                         file_name=f"rapport_visite_{date.strftime('%Y%m%d')}.pdf",
                         mime="application/pdf",
                         use_container_width=True
                     )
-                    st.success("✅ PDF généré avec succès!")
+                    st.success("PDF généré avec succès!")
                 except Exception as e:
                     st.error(f"Erreur lors de la génération du PDF: {str(e)}")
         else:
-            st.warning("⚠️ Veuillez remplir au moins l'adresse et le code immeuble.")
+            st.warning("Veuillez remplir au moins l'adresse et le code immeuble.")
