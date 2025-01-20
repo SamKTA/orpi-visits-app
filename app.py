@@ -316,7 +316,7 @@ with col2:
                         mime="application/pdf",
                         use_container_width=True
                     )
-                    except Exception as e:
+                except Exception as e:
                     st.error(f"Erreur lors de la génération du PDF: {str(e)}")
         else:
             st.warning("Veuillez remplir au moins l'adresse et le code immeuble.")
