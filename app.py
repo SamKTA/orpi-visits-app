@@ -9,13 +9,15 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
+from streamlit_drawable_canvas import st_canvas
+import base64
+from io import BytesIO
 
 # Configuration de la page
 st.set_page_config(page_title="Visite de Copropriété ORPI", layout="wide")
 
 def clean_text_for_pdf(text):
-    # Nettoie les émojis et caractères spéciaux
-    text = str(text)  # Conversion en string pour être sûr
+    text = str(text)
     text = text.replace("✅ ", "")
     text = text.replace("❌ ", "")
     text = text.replace("'", "'")
@@ -35,7 +37,6 @@ def send_pdf_by_email(pdf_content, date, address):
         msg['From'] = st.secrets["email"]["sender"]
         msg['To'] = recipient_email
         
-        # Nettoyer l'adresse pour le sujet de l'email
         address_clean = clean_text_for_pdf(address)
         msg['Subject'] = f"Rapport de visite - {address_clean} - {date}"
         
@@ -64,29 +65,66 @@ def send_pdf_by_email(pdf_content, date, address):
         st.error(f"Erreur lors de l'envoi de l'email : {str(e)}")
         return False
 
-def create_pdf(data, main_image_file, observations):
-    pdf = FPDF()
+def create_pdf(data, main_image_file, observations, signature_image=None):
+    class PDF(FPDF):
+        def header(self):
+            self.set_fill_color(227, 31, 43)
+            self.rect(10, 10, 30, 15, 'F')
+            self.set_text_color(255, 255, 255)
+            self.set_font('Arial', 'B', 12)
+            self.text(15, 20, 'ORPI')
+            
+            self.set_text_color(0, 0, 0)
+            self.set_font('Arial', 'B', 16)
+            self.cell(0, 10, 'RAPPORT DE VISITE', 0, 1, 'C')
+            self.ln(10)
+        
+        def footer(self):
+            self.set_y(-15)
+            self.set_font('Arial', 'I', 8)
+            self.set_text_color(128, 128, 128)
+            self.cell(0, 10, f'Page {self.page_no()}/{{nb}}', 0, 0, 'C')
+
+    pdf = PDF()
+    pdf.alias_nb_pages()
     pdf.add_page()
     
-    # En-tête
-    pdf.set_font('Arial', 'B', 16)
-    pdf.set_text_color(227, 31, 43)  # Rouge ORPI
-    pdf.cell(0, 10, 'Rapport de Visite - ORPI', 0, 1, 'C')
-    
     # Informations principales
-    pdf.set_font('Arial', '', 12)
-    pdf.set_text_color(0, 0, 0)  # Noir
+    pdf.set_fill_color(240, 240, 240)
+    pdf.rect(10, 40, 190, 50, 'F')
+    pdf.set_font('Arial', 'B', 12)
+    pdf.set_xy(15, 45)
     
-    # Nettoyer les chaînes de caractères avant de les ajouter au PDF
-    address_clean = clean_text_for_pdf(data['address'])
-    redacteur_clean = clean_text_for_pdf(data['redacteur'])
-    building_code_clean = clean_text_for_pdf(data['building_code'])
+    col_width = 90
+    line_height = 8
     
-    pdf.cell(0, 10, f"Date: {data['date']}", 0, 1)
-    pdf.cell(0, 10, f"Adresse: {address_clean}", 0, 1)
-    pdf.cell(0, 10, f"Redacteur: {redacteur_clean}", 0, 1)
-    pdf.cell(0, 10, f"Horaires: {data['arrival_time']} - {data['departure_time']}", 0, 1)
-    pdf.cell(0, 10, f"Code Immeuble: {building_code_clean}", 0, 1)
+    # Mise en page en colonnes
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(25, line_height, 'Date:', 0, 0)
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(65, line_height, f"{data['date']}", 0, 0)
+    
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(35, line_height, 'Rédacteur:', 0, 0)
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(55, line_height, f"{data['redacteur']}", 0, 1)
+    
+    pdf.set_x(15)
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(25, line_height, 'Adresse:', 0, 0)
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(65, line_height, f"{data['address']}", 0, 0)
+    
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(35, line_height, 'Horaires:', 0, 0)
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(55, line_height, f"{data['arrival_time']} - {data['departure_time']}", 0, 1)
+    
+    pdf.set_x(15)
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(25, line_height, 'Code:', 0, 0)
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(65, line_height, f"{data['building_code']}", 0, 1)
     
     # Image principale
     if main_image_file is not None:
@@ -94,7 +132,12 @@ def create_pdf(data, main_image_file, observations):
         try:
             with open(temp_image_path, "wb") as f:
                 f.write(main_image_file.getvalue())
-            pdf.image(temp_image_path, x=10, y=None, w=190)
+            img = Image.open(temp_image_path)
+            img_w, img_h = img.size
+            aspect = img_h / img_w
+            width = 190
+            height = width * aspect
+            pdf.image(temp_image_path, x=10, y=100, w=width, h=height)
         finally:
             if os.path.exists(temp_image_path):
                 os.remove(temp_image_path)
@@ -102,28 +145,62 @@ def create_pdf(data, main_image_file, observations):
     # Observations
     pdf.add_page()
     pdf.set_font('Arial', 'B', 14)
-    pdf.cell(0, 10, 'Observations', 0, 1)
+    pdf.set_fill_color(227, 31, 43)
+    pdf.set_text_color(255, 255, 255)
+    pdf.cell(0, 10, 'OBSERVATIONS', 1, 1, 'C', True)
+    pdf.set_text_color(0, 0, 0)
     
     for idx, obs in enumerate(observations):
-        pdf.set_font('Arial', 'B', 12)
-        obs_type = "Positive" if "Positive" in obs['type'] else "Negative"
-        pdf.cell(0, 10, f"Observation {idx + 1} - {obs_type}", 0, 1)
+        pdf.ln(5)
+        pdf.set_fill_color(245, 245, 245)
         
-        pdf.set_font('Arial', '', 12)
+        pdf.set_font('Arial', 'B', 12)
+        obs_type = "Positive" if "Positive" in obs['type'] else "Négative"
+        icon = "✓" if obs_type == "Positive" else "✗"
+        header_color = (0, 150, 0) if obs_type == "Positive" else (200, 0, 0)
+        pdf.set_text_color(*header_color)
+        pdf.cell(0, 10, f"{icon} Observation {idx + 1} - {obs_type}", 0, 1, 'L')
+        
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font('Arial', '', 10)
         description_clean = clean_text_for_pdf(obs['description'])
-        pdf.multi_cell(0, 10, description_clean)
+        pdf.multi_cell(0, 7, description_clean)
         
         if obs['photo'] is not None:
             temp_obs_path = f"temp_obs_{idx}.jpg"
             try:
                 with open(temp_obs_path, "wb") as f:
                     f.write(obs['photo'].getvalue())
-                pdf.image(temp_obs_path, x=10, y=None, w=190)
+                pdf.image(temp_obs_path, x=10, y=pdf.get_y() + 5, w=190)
+                pdf.ln(60)
             finally:
                 if os.path.exists(temp_obs_path):
                     os.remove(temp_obs_path)
         
-        pdf.cell(0, 10, '', 0, 1)
+        pdf.ln(5)
+        pdf.cell(0, 0, '', 'B')
+
+    # Page de signature
+    pdf.add_page()
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, "VALIDATION DU RAPPORT", 0, 1, 'C')
+    pdf.ln(5)
+    
+    pdf.set_font('Arial', 'B', 11)
+    pdf.cell(0, 10, data['redacteur'], 0, 1, 'C')
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(0, 5, "Gestionnaire de copropriété", 0, 1, 'C')
+    
+    # Ajout de la signature
+    if signature_image is not None:
+        temp_sig_path = "temp_signature.png"
+        try:
+            with open(temp_sig_path, "wb") as f:
+                f.write(signature_image)
+            pdf.image(temp_sig_path, x=60, y=pdf.get_y() + 10, w=90)
+        finally:
+            if os.path.exists(temp_sig_path):
+                os.remove(temp_sig_path)
     
     return pdf
 
@@ -137,7 +214,6 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("📝 Informations générales")
     
-    # Champs obligatoires
     date = st.date_input("Date de la visite", datetime.now())
     address = st.text_input("Adresse")
     redacteur = st.selectbox("Rédacteur", ["David SAINT-GERMAIN", "Elodie BONNAY"])
@@ -145,20 +221,36 @@ with col1:
     departure_time = st.time_input("Heure de départ")
     building_code = st.text_input("Code Immeuble")
     
-    # Upload de l'image principale
     main_image = st.file_uploader("Photo principale de la copropriété", type=['png', 'jpg', 'jpeg'])
     if main_image:
         st.image(main_image, caption="Photo principale", use_column_width=True)
 
+    # Ajout du canvas de signature
+    st.markdown("### ✍️ Signature")
+    signature_canvas = st_canvas(
+        stroke_width=2,
+        stroke_color="black",
+        background_color="#ffffff",
+        height=150,
+        width=300,
+        drawing_mode="freedraw",
+        key="signature",
+    )
+    
+    if st.button("Effacer la signature"):
+        st.session_state.signature = None
+        st.experimental_rerun()
+
 with col2:
     st.subheader("🔍 Observations")
     
-    # Gestion des observations avec st.session_state
     if 'observations' not in st.session_state:
         st.session_state.observations = []
     
-    # Formulaire d'ajout d'observation
-    with st.form("observation_form"):
+    if 'form_key' not in st.session_state:
+        st.session_state.form_key = 0
+    
+    with st.form(f"observation_form_{st.session_state.form_key}"):
         obs_type = st.radio("Type d'observation", ["✅ Positive", "❌ Négative"])
         description = st.text_area("Description")
         photo = st.file_uploader("Photo de l'observation", type=['png', 'jpg', 'jpeg'])
@@ -172,10 +264,11 @@ with col2:
                     "photo": photo
                 })
                 st.success("Observation ajoutée avec succès!")
+                st.session_state.form_key += 1
+                st.experimental_rerun()
             else:
                 st.error("Veuillez ajouter une description à votre observation.")
 
-    # Affichage des observations
     if st.session_state.observations:
         st.markdown("### 📋 Liste des observations")
         for idx, obs in enumerate(st.session_state.observations):
@@ -202,15 +295,20 @@ with col2:
                     "building_code": building_code
                 }
                 
+                # Récupération de la signature
+                signature_image = None
+                if signature_canvas.image_data is not None:
+                    signature_buffer = BytesIO()
+                    signature_canvas.image_data.save(signature_buffer, format="PNG")
+                    signature_image = signature_buffer.getvalue()
+                
                 try:
-                    pdf = create_pdf(data, main_image, st.session_state.observations)
+                    pdf = create_pdf(data, main_image, st.session_state.observations, signature_image)
                     pdf_output = pdf.output(dest='S').encode('latin1')
                     
-                    # Envoi du PDF par email
                     if send_pdf_by_email(pdf_output, date.strftime('%Y-%m-%d'), address):
                         st.success("✅ PDF généré et envoyé par email avec succès!")
                     
-                    # Proposition de téléchargement
                     st.download_button(
                         label="Télécharger le rapport PDF",
                         data=pdf_output,
@@ -218,7 +316,7 @@ with col2:
                         mime="application/pdf",
                         use_container_width=True
                     )
-                except Exception as e:
+              except Exception as e:
                     st.error(f"Erreur lors de la génération du PDF: {str(e)}")
         else:
             st.warning("Veuillez remplir au moins l'adresse et le code immeuble.")
