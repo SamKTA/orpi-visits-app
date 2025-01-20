@@ -5,16 +5,54 @@ import io
 from fpdf import FPDF
 from PIL import Image
 import os
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
 
 # Configuration de la page
 st.set_page_config(page_title="Visite de Copropriété ORPI", layout="wide")
 
 # Fonction pour nettoyer le texte des émojis
 def clean_text_for_pdf(text):
-    # Remplace les émojis par du texte
     text = text.replace("✅ ", "")
     text = text.replace("❌ ", "")
     return text
+
+# Fonction pour envoyer l'email
+def send_pdf_by_email(pdf_content, date, address):
+    try:
+        recipient_email = "skita@orpi.com"
+        
+        msg = MIMEMultipart()
+        msg['From'] = st.secrets["email"]["sender"]
+        msg['To'] = recipient_email
+        msg['Subject'] = f"Rapport de visite - {address} - {date}"
+        
+        body = f"""
+        Bonjour,
+
+        Veuillez trouver ci-joint le rapport de la visite effectuée le {date} à l'adresse : {address}.
+
+        Cordialement,
+        Service Syndic ORPI
+        """
+        msg.attach(MIMEText(body, 'plain'))
+        
+        pdf_attachment = MIMEApplication(pdf_content, _subtype='pdf')
+        pdf_attachment.add_header('Content-Disposition', 'attachment', 
+                                filename=f'rapport_visite_{date}.pdf')
+        msg.attach(pdf_attachment)
+        
+        with smtplib.SMTP_SSL(st.secrets["email"]["smtp_server"], 
+                             st.secrets["email"]["smtp_port"]) as server:
+            server.login(st.secrets["email"]["username"], 
+                        st.secrets["email"]["password"])
+            server.send_message(msg)
+        return True
+    except Exception as e:
+        st.error(f"Erreur lors de l'envoi de l'email : {str(e)}")
+        return False
 
 # Fonction pour créer le PDF
 def create_pdf(data, main_image_file, observations):
@@ -31,7 +69,7 @@ def create_pdf(data, main_image_file, observations):
     pdf.set_text_color(0, 0, 0)  # Noir
     pdf.cell(0, 10, f"Date: {data['date']}", 0, 1)
     pdf.cell(0, 10, f"Adresse: {data['address']}", 0, 1)
-    pdf.cell(0, 10, f"Redacteur: {data['redacteur']}", 0, 1)
+    pdf.cell(0, 10, f"Rédacteur: {data['redacteur']}", 0, 1)
     pdf.cell(0, 10, f"Horaires: {data['arrival_time']} - {data['departure_time']}", 0, 1)
     pdf.cell(0, 10, f"Code Immeuble: {data['building_code']}", 0, 1)
     
@@ -53,12 +91,10 @@ def create_pdf(data, main_image_file, observations):
     
     for idx, obs in enumerate(observations):
         pdf.set_font('Arial', 'B', 12)
-        # Nettoyage du type d'observation pour le PDF
-        obs_type = "Positive" if "Positive" in obs['type'] else "Negative"
+        obs_type = "Positive" if "Positive" in obs['type'] else "Négative"
         pdf.cell(0, 10, f"Observation {idx + 1} - {obs_type}", 0, 1)
         
         pdf.set_font('Arial', '', 12)
-        # Nettoyage de la description pour le PDF
         description = clean_text_for_pdf(obs['description'])
         pdf.multi_cell(0, 10, description)
         
@@ -141,7 +177,7 @@ col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     if st.button("Générer le rapport PDF", use_container_width=True):
         if address and building_code:
-            with st.spinner("Génération du rapport en cours..."):
+            with st.spinner("Génération et envoi du rapport en cours..."):
                 data = {
                     "date": date,
                     "address": address,
@@ -155,6 +191,11 @@ with col2:
                     pdf = create_pdf(data, main_image, st.session_state.observations)
                     pdf_output = pdf.output(dest='S').encode('latin1')
                     
+                    # Envoi du PDF par email
+                    if send_pdf_by_email(pdf_output, date.strftime('%Y-%m-%d'), address):
+                        st.success("✅ PDF généré et envoyé par email avec succès!")
+                    
+                    # Proposition de téléchargement
                     st.download_button(
                         label="Télécharger le rapport PDF",
                         data=pdf_output,
@@ -162,7 +203,6 @@ with col2:
                         mime="application/pdf",
                         use_container_width=True
                     )
-                    st.success("PDF généré avec succès!")
                 except Exception as e:
                     st.error(f"Erreur lors de la génération du PDF: {str(e)}")
         else:
