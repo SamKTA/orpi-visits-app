@@ -1,3 +1,5 @@
+import numpy as np
+from PIL import Image as PILImage
 import streamlit as st
 from datetime import datetime
 import pandas as pd
@@ -279,46 +281,46 @@ with col2:
     else:
         st.info("Aucune observation ajoutée pour le moment.")
 
-# Bouton de génération du rapport
-st.markdown("---")
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    if st.button("Générer le rapport PDF", use_container_width=True):
-        if address and building_code:
-            # Vérification de la signature
-            if signature_canvas.image_data is None:
-                st.error("Veuillez signer le document avant de générer le PDF")
-            else:
-                with st.spinner("Génération et envoi du rapport en cours..."):
-                    data = {
-                        "date": date,
-                        "address": address,
-                        "redacteur": redacteur,
-                        "arrival_time": arrival_time,
-                        "departure_time": departure_time,
-                        "building_code": building_code
-                    }
-                    
-                    # Récupération de la signature
-                    try:
-                        signature_buffer = BytesIO()
-                        signature_canvas.image_data.save(signature_buffer, format="PNG")
-                        signature_image = signature_buffer.getvalue()
-                        
-                        pdf = create_pdf(data, main_image, st.session_state.observations, signature_image)
-                        pdf_output = pdf.output(dest='S').encode('latin1')
-                        
-                        if send_pdf_by_email(pdf_output, date.strftime('%Y-%m-%d'), address):
-                            st.success("✅ PDF généré et envoyé par email avec succès!")
-                        
-                        st.download_button(
-                            label="Télécharger le rapport PDF",
-                            data=pdf_output,
-                            file_name=f"rapport_visite_{date.strftime('%Y%m%d')}.pdf",
-                            mime="application/pdf",
-                            use_container_width=True
-                        )
-                    except Exception as e:
-                        st.error(f"Erreur lors de la génération du PDF: {str(e)}")
+if st.button("Générer le rapport PDF", use_container_width=True):
+    if address and building_code:
+        if signature_canvas.image_data is None:
+            st.error("Veuillez signer le document avant de générer le PDF")
         else:
-            st.warning("Veuillez remplir au moins l'adresse et le code immeuble.")
+            with st.spinner("Génération et envoi du rapport en cours..."):
+                data = {
+                    "date": date,
+                    "address": address,
+                    "redacteur": redacteur,
+                    "arrival_time": arrival_time,
+                    "departure_time": departure_time,
+                    "building_code": building_code
+                }
+                
+                # Conversion de la signature en image
+                try:
+                    # Convertir le numpy array en image PIL
+                    signature_array = signature_canvas.image_data.astype(np.uint8)
+                    signature_image = PILImage.fromarray(signature_array)
+                    
+                    # Sauvegarder l'image en bytes
+                    signature_buffer = BytesIO()
+                    signature_image.save(signature_buffer, format="PNG")
+                    signature_bytes = signature_buffer.getvalue()
+                    
+                    pdf = create_pdf(data, main_image, st.session_state.observations, signature_bytes)
+                    pdf_output = pdf.output(dest='S').encode('latin1')
+                    
+                    if send_pdf_by_email(pdf_output, date.strftime('%Y-%m-%d'), address):
+                        st.success("✅ PDF généré et envoyé par email avec succès!")
+                    
+                    st.download_button(
+                        label="Télécharger le rapport PDF",
+                        data=pdf_output,
+                        file_name=f"rapport_visite_{date.strftime('%Y%m%d')}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+                except Exception as e:
+                    st.error(f"Erreur lors de la génération du PDF: {str(e)}")
+    else:
+        st.warning("Veuillez remplir au moins l'adresse et le code immeuble.")
