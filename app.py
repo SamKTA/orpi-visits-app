@@ -285,38 +285,40 @@ col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     if st.button("Générer le rapport PDF", use_container_width=True):
         if address and building_code:
-            with st.spinner("Génération et envoi du rapport en cours..."):
-                data = {
-                    "date": date,
-                    "address": address,
-                    "redacteur": redacteur,
-                    "arrival_time": arrival_time,
-                    "departure_time": departure_time,
-                    "building_code": building_code
-                }
-                
-                # Récupération de la signature
-                signature_image = None
-                if signature_canvas.image_data is not None:
-                    signature_buffer = BytesIO()
-                    signature_canvas.image_data.save(signature_buffer, format="PNG")
-                    signature_image = signature_buffer.getvalue()
-                
-                try:
-                    pdf = create_pdf(data, main_image, st.session_state.observations, signature_image)
-                    pdf_output = pdf.output(dest='S').encode('latin1')
+            # Vérification de la signature
+            if signature_canvas.image_data is None:
+                st.error("Veuillez signer le document avant de générer le PDF")
+            else:
+                with st.spinner("Génération et envoi du rapport en cours..."):
+                    data = {
+                        "date": date,
+                        "address": address,
+                        "redacteur": redacteur,
+                        "arrival_time": arrival_time,
+                        "departure_time": departure_time,
+                        "building_code": building_code
+                    }
                     
-                    if send_pdf_by_email(pdf_output, date.strftime('%Y-%m-%d'), address):
-                        st.success("✅ PDF généré et envoyé par email avec succès!")
-                    
-                    st.download_button(
-                        label="Télécharger le rapport PDF",
-                        data=pdf_output,
-                        file_name=f"rapport_visite_{date.strftime('%Y%m%d')}.pdf",
-                        mime="application/pdf",
-                        use_container_width=True
-                    )
-                except Exception as e:
-                    st.error(f"Erreur lors de la génération du PDF: {str(e)}")
+                    # Récupération de la signature
+                    try:
+                        signature_buffer = BytesIO()
+                        signature_canvas.image_data.save(signature_buffer, format="PNG")
+                        signature_image = signature_buffer.getvalue()
+                        
+                        pdf = create_pdf(data, main_image, st.session_state.observations, signature_image)
+                        pdf_output = pdf.output(dest='S').encode('latin1')
+                        
+                        if send_pdf_by_email(pdf_output, date.strftime('%Y-%m-%d'), address):
+                            st.success("✅ PDF généré et envoyé par email avec succès!")
+                        
+                        st.download_button(
+                            label="Télécharger le rapport PDF",
+                            data=pdf_output,
+                            file_name=f"rapport_visite_{date.strftime('%Y%m%d')}.pdf",
+                            mime="application/pdf",
+                            use_container_width=True
+                        )
+                    except Exception as e:
+                        st.error(f"Erreur lors de la génération du PDF: {str(e)}")
         else:
             st.warning("Veuillez remplir au moins l'adresse et le code immeuble.")
