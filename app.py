@@ -13,13 +13,20 @@ from email.mime.application import MIMEApplication
 # Configuration de la page
 st.set_page_config(page_title="Visite de Copropriété ORPI", layout="wide")
 
-# Fonction pour nettoyer le texte des émojis
 def clean_text_for_pdf(text):
+    # Nettoie les émojis et caractères spéciaux
+    text = str(text)  # Conversion en string pour être sûr
     text = text.replace("✅ ", "")
     text = text.replace("❌ ", "")
+    text = text.replace("'", "'")
+    text = text.replace(""", '"')
+    text = text.replace(""", '"')
+    text = text.replace("é", "e")
+    text = text.replace("è", "e")
+    text = text.replace("à", "a")
+    text = text.replace("ê", "e")
     return text
 
-# Fonction pour envoyer l'email
 def send_pdf_by_email(pdf_content, date, address):
     try:
         recipient_email = "skita@orpi.com"
@@ -27,17 +34,20 @@ def send_pdf_by_email(pdf_content, date, address):
         msg = MIMEMultipart()
         msg['From'] = st.secrets["email"]["sender"]
         msg['To'] = recipient_email
-        msg['Subject'] = f"Rapport de visite - {address} - {date}"
+        
+        # Nettoyer l'adresse pour le sujet de l'email
+        address_clean = clean_text_for_pdf(address)
+        msg['Subject'] = f"Rapport de visite - {address_clean} - {date}"
         
         body = f"""
         Bonjour,
 
-        Veuillez trouver ci-joint le rapport de la visite effectuée le {date} à l'adresse : {address}.
+        Veuillez trouver ci-joint le rapport de la visite effectuee le {date} a l'adresse : {address_clean}.
 
         Cordialement,
         Service Syndic ORPI
         """
-        msg.attach(MIMEText(body, 'plain'))
+        msg.attach(MIMEText(body, 'plain', 'utf-8'))
         
         pdf_attachment = MIMEApplication(pdf_content, _subtype='pdf')
         pdf_attachment.add_header('Content-Disposition', 'attachment', 
@@ -54,7 +64,6 @@ def send_pdf_by_email(pdf_content, date, address):
         st.error(f"Erreur lors de l'envoi de l'email : {str(e)}")
         return False
 
-# Fonction pour créer le PDF
 def create_pdf(data, main_image_file, observations):
     pdf = FPDF()
     pdf.add_page()
@@ -67,11 +76,17 @@ def create_pdf(data, main_image_file, observations):
     # Informations principales
     pdf.set_font('Arial', '', 12)
     pdf.set_text_color(0, 0, 0)  # Noir
+    
+    # Nettoyer les chaînes de caractères avant de les ajouter au PDF
+    address_clean = clean_text_for_pdf(data['address'])
+    redacteur_clean = clean_text_for_pdf(data['redacteur'])
+    building_code_clean = clean_text_for_pdf(data['building_code'])
+    
     pdf.cell(0, 10, f"Date: {data['date']}", 0, 1)
-    pdf.cell(0, 10, f"Adresse: {data['address']}", 0, 1)
-    pdf.cell(0, 10, f"Rédacteur: {data['redacteur']}", 0, 1)
+    pdf.cell(0, 10, f"Adresse: {address_clean}", 0, 1)
+    pdf.cell(0, 10, f"Redacteur: {redacteur_clean}", 0, 1)
     pdf.cell(0, 10, f"Horaires: {data['arrival_time']} - {data['departure_time']}", 0, 1)
-    pdf.cell(0, 10, f"Code Immeuble: {data['building_code']}", 0, 1)
+    pdf.cell(0, 10, f"Code Immeuble: {building_code_clean}", 0, 1)
     
     # Image principale
     if main_image_file is not None:
@@ -91,12 +106,12 @@ def create_pdf(data, main_image_file, observations):
     
     for idx, obs in enumerate(observations):
         pdf.set_font('Arial', 'B', 12)
-        obs_type = "Positive" if "Positive" in obs['type'] else "Négative"
+        obs_type = "Positive" if "Positive" in obs['type'] else "Negative"
         pdf.cell(0, 10, f"Observation {idx + 1} - {obs_type}", 0, 1)
         
         pdf.set_font('Arial', '', 12)
-        description = clean_text_for_pdf(obs['description'])
-        pdf.multi_cell(0, 10, description)
+        description_clean = clean_text_for_pdf(obs['description'])
+        pdf.multi_cell(0, 10, description_clean)
         
         if obs['photo'] is not None:
             temp_obs_path = f"temp_obs_{idx}.jpg"
