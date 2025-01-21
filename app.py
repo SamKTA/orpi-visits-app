@@ -152,16 +152,24 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
     pdf.cell(0, 10, 'OBSERVATIONS', 1, 1, 'C', True)
     pdf.set_text_color(0, 0, 0)
     
+    # VOICI LA PARTIE À REMPLACER ⬇️
     for idx, obs in enumerate(observations):
         pdf.ln(5)
         pdf.set_fill_color(245, 245, 245)
         
+        # En-tête de l'observation sans symboles spéciaux
         pdf.set_font('Arial', 'B', 12)
         obs_type = "Positive" if "Positive" in obs['type'] else "Négative"
-        icon = "✓" if obs_type == "Positive" else "✗"
-        header_color = (0, 150, 0) if obs_type == "Positive" else (200, 0, 0)
+        if obs_type == "Positive":
+            icon = "+"
+            header_color = (0, 150, 0)  # Vert pour positif
+        else:
+            icon = "-"
+            header_color = (200, 0, 0)  # Rouge pour négatif
+            
         pdf.set_text_color(*header_color)
         pdf.cell(0, 10, f"{icon} Observation {idx + 1} - {obs_type}", 0, 1, 'L')
+    # FIN DE LA PARTIE À REMPLACER ⬆️
         
         pdf.set_text_color(0, 0, 0)
         pdf.set_font('Arial', '', 10)
@@ -193,7 +201,6 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
     pdf.set_font('Arial', '', 10)
     pdf.cell(0, 5, "Gestionnaire de copropriété", 0, 1, 'C')
     
-    # Ajout de la signature
     if signature_image is not None:
         temp_sig_path = "temp_signature.png"
         try:
