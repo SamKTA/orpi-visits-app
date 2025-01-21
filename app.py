@@ -15,6 +15,31 @@ from streamlit_drawable_canvas import st_canvas
 import base64
 from io import BytesIO
 
+def fix_image_rotation(image_data):
+    # Convertir les bytes en image PIL
+    img = Image.open(BytesIO(image_data))
+    
+    try:
+        # Obtenir l'orientation EXIF
+        exif = img._getexif()
+        if exif is not None:
+            orientation = exif.get(274)  # 274 est le tag pour l'orientation
+            if orientation == 3:
+                img = img.rotate(180, expand=True)
+            elif orientation == 6:
+                img = img.rotate(270, expand=True)
+            elif orientation == 8:
+                img = img.rotate(90, expand=True)
+    except:
+        # Si pas d'information EXIF, on force la rotation selon les dimensions
+        if img.width < img.height:
+            img = img.rotate(270, expand=True)
+    
+    # Sauvegarder l'image corrigée
+    output_buffer = BytesIO()
+    img.save(output_buffer, format='JPEG')
+    return output_buffer.getvalue()
+
 # Configuration de la page
 st.set_page_config(page_title="Visite de Copropriété ORPI", layout="wide")
 
