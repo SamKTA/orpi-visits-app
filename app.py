@@ -120,7 +120,7 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
     
     # Informations principales
     pdf.set_fill_color(240, 240, 240)
-    pdf.rect(10, 40, 190, 50, 'F')
+    pdf.rect(10, 40, 190, 60, 'F')  # Hauteur augmentée à 60
     pdf.set_font('Arial', 'B', 12)
     pdf.set_xy(15, 45)
     
@@ -142,12 +142,21 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
     pdf.set_font('Arial', 'B', 10)
     pdf.cell(25, line_height, 'Adresse:', 0, 0)
     pdf.set_font('Arial', '', 10)
-    pdf.cell(65, line_height, f"{data['address']}", 0, 0)
+    pdf.cell(65, line_height, f"{data['address']}", 0, 1)
     
+    # Heure d'arrivée
+    pdf.set_x(15)
     pdf.set_font('Arial', 'B', 10)
-    pdf.cell(35, line_height, 'Horaires:', 0, 0)
+    pdf.cell(35, line_height, "Heure d'arrivée:", 0, 0)
     pdf.set_font('Arial', '', 10)
-    pdf.cell(55, line_height, f"{data['arrival_time']} - {data['departure_time']}", 0, 1)
+    pdf.cell(65, line_height, f"{data['arrival_time']}", 0, 1)
+    
+    # Heure de départ
+    pdf.set_x(15)
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(35, line_height, "Heure de départ:", 0, 0)
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(65, line_height, f"{data['departure_time']}", 0, 1)
     
     pdf.set_x(15)
     pdf.set_font('Arial', 'B', 10)
@@ -168,7 +177,7 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
             aspect = img_h / img_w
             width = 190
             height = width * aspect
-            pdf.image(temp_image_path, x=10, y=100, w=width, h=height)
+            pdf.image(temp_image_path, x=10, y=110, w=width, h=height)  # Y ajusté à 110 pour tenir compte du cadre plus grand
         finally:
             if os.path.exists(temp_image_path):
                 os.remove(temp_image_path)
