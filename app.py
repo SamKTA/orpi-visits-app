@@ -155,10 +155,15 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
     pdf.set_text_color(0, 0, 0)
     
     for idx, obs in enumerate(observations):
-        pdf.ln(5)
-        pdf.set_fill_color(245, 245, 245)
+        # Espacement entre les observations
+        pdf.ln(15)  # Augmentation de l'espacement entre les observations
         
-        # En-tête de l'observation sans symboles spéciaux
+        # Cadre gris clair pour chaque observation
+        pdf.set_fill_color(245, 245, 245)
+        start_y = pdf.get_y()
+        pdf.rect(10, start_y, 190, 10, 'F')
+        
+        # En-tête de l'observation
         pdf.set_font('Arial', 'B', 12)
         obs_type_clean = clean_text_for_pdf(obs['type'])
         obs_type = "Positive" if "Positive" in obs_type_clean else "Negative"
@@ -166,28 +171,50 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
             header_color = (0, 150, 0)  # Vert pour positif
         else:
             header_color = (200, 0, 0)  # Rouge pour négatif
-            
-        pdf.set_text_color(*header_color)
-        pdf.cell(0, 10, f"Observation {idx + 1} - {obs_type}", 0, 1, 'L')
         
+        pdf.set_text_color(*header_color)
+        pdf.set_xy(15, start_y + 2)
+        pdf.cell(0, 8, f"Observation {idx + 1} - {obs_type}", 0, 1, 'L')
+        
+        # Titre "Description :"
+        pdf.ln(5)
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font('Arial', 'B', 11)
+        pdf.cell(0, 8, "Description :", 0, 1, 'L')
+        
+        # Contenu de la description
         pdf.set_text_color(0, 0, 0)
         pdf.set_font('Arial', '', 10)
         description_clean = clean_text_for_pdf(obs['description'])
         pdf.multi_cell(0, 7, description_clean)
         
+        # Espacement avant l'image
+        pdf.ln(5)
+        
+        # Photo de l'observation avec titre
         if obs['photo'] is not None:
+            pdf.set_font('Arial', 'B', 11)
+            pdf.cell(0, 8, "Photo :", 0, 1, 'L')
+            pdf.ln(2)
+            
             temp_obs_path = f"temp_obs_{idx}.jpg"
             try:
                 with open(temp_obs_path, "wb") as f:
                     f.write(obs['photo'].getvalue())
-                pdf.image(temp_obs_path, x=10, y=pdf.get_y() + 5, w=190)
-                pdf.ln(60)
+                pdf.image(temp_obs_path, x=10, y=pdf.get_y(), w=190)
+                pdf.ln(130)  # Espacement après l'image
             finally:
                 if os.path.exists(temp_obs_path):
                     os.remove(temp_obs_path)
         
+        # Ligne de séparation entre les observations
         pdf.ln(5)
-        pdf.cell(0, 0, '', 'B')
+        pdf.set_draw_color(200, 200, 200)  # Gris clair
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        
+        # Vérifier si on a besoin d'une nouvelle page
+        if pdf.get_y() > 250:  # Si on approche du bas de la page
+            pdf.add_page()
 
     # Page de signature
     pdf.add_page()
@@ -211,7 +238,6 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
                 os.remove(temp_sig_path)
     
     return pdf
-
 # Titre
 st.title("📋 Visite de Copropriété ORPI")
 st.markdown("---")
