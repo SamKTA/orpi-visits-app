@@ -20,8 +20,8 @@ st.set_page_config(page_title="Visite de Copropriété ORPI", layout="wide")
 
 def clean_text_for_pdf(text):
     text = str(text)
-    text = text.replace("✅ ", "")
-    text = text.replace("❌ ", "")
+    text = text.replace("✅", "+")  # Remplace le symbole ✅
+    text = text.replace("❌", "-")  # Remplace le symbole ❌
     text = text.replace("'", "'")
     text = text.replace(""", '"')
     text = text.replace(""", '"')
@@ -29,6 +29,8 @@ def clean_text_for_pdf(text):
     text = text.replace("è", "e")
     text = text.replace("à", "a")
     text = text.replace("ê", "e")
+    text = text.replace("✓", "+")
+    text = text.replace("✗", "-")
     return text
 
 def send_pdf_by_email(pdf_content, date, address):
