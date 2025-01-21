@@ -20,8 +20,8 @@ st.set_page_config(page_title="Visite de Copropriété ORPI", layout="wide")
 
 def clean_text_for_pdf(text):
     text = str(text)
-    text = text.replace("✅", "+")  # Remplace le symbole ✅
-    text = text.replace("❌", "-")  # Remplace le symbole ❌
+    text = text.replace("✅", "+")  
+    text = text.replace("❌", "-")  
     text = text.replace("'", "'")
     text = text.replace(""", '"')
     text = text.replace(""", '"')
@@ -154,24 +154,21 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
     pdf.cell(0, 10, 'OBSERVATIONS', 1, 1, 'C', True)
     pdf.set_text_color(0, 0, 0)
     
-    # VOICI LA PARTIE À REMPLACER ⬇️
     for idx, obs in enumerate(observations):
         pdf.ln(5)
         pdf.set_fill_color(245, 245, 245)
         
         # En-tête de l'observation sans symboles spéciaux
         pdf.set_font('Arial', 'B', 12)
-        obs_type = "Positive" if "Positive" in obs['type'] else "Négative"
+        obs_type_clean = clean_text_for_pdf(obs['type'])
+        obs_type = "Positive" if "Positive" in obs_type_clean else "Negative"
         if obs_type == "Positive":
-            icon = "+"
             header_color = (0, 150, 0)  # Vert pour positif
         else:
-            icon = "-"
             header_color = (200, 0, 0)  # Rouge pour négatif
             
         pdf.set_text_color(*header_color)
-        pdf.cell(0, 10, f"{icon} Observation {idx + 1} - {obs_type}", 0, 1, 'L')
-    # FIN DE LA PARTIE À REMPLACER ⬆️
+        pdf.cell(0, 10, f"Observation {idx + 1} - {obs_type}", 0, 1, 'L')
         
         pdf.set_text_color(0, 0, 0)
         pdf.set_font('Arial', '', 10)
