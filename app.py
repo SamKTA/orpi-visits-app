@@ -159,8 +159,10 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
     if main_image_file is not None:
         temp_image_path = "temp_main_image.jpg"
         try:
+            # Corriger la rotation
+            corrected_image = fix_image_rotation(main_image_file.getvalue())
             with open(temp_image_path, "wb") as f:
-                f.write(main_image_file.getvalue())
+                f.write(corrected_image)
             img = Image.open(temp_image_path)
             img_w, img_h = img.size
             aspect = img_h / img_w
@@ -224,11 +226,11 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
             
             temp_obs_path = f"temp_obs_{idx}.jpg"
             try:
+                # Corriger la rotation
+                corrected_image = fix_image_rotation(obs['photo'].getvalue())
                 with open(temp_obs_path, "wb") as f:
-                    f.write(obs['photo'].getvalue())
-                # Position Y avant l'image
+                    f.write(corrected_image)
                 current_y = pdf.get_y()
-                # Vérifier si l'image tiendra sur la page actuelle
                 if current_y > 200:  # Si on est trop bas dans la page
                     pdf.add_page()
                     current_y = pdf.get_y()
