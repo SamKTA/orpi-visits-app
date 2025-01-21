@@ -156,7 +156,7 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
     
     for idx, obs in enumerate(observations):
         # Espacement entre les observations
-        pdf.ln(15)  # Augmentation de l'espacement entre les observations
+        pdf.ln(20)  # Augmentation de l'espacement entre les observations
         
         # Cadre gris clair pour chaque observation
         pdf.set_fill_color(245, 245, 245)
@@ -177,7 +177,7 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
         pdf.cell(0, 8, f"Observation {idx + 1} - {obs_type}", 0, 1, 'L')
         
         # Titre "Description :"
-        pdf.ln(5)
+        pdf.ln(8)
         pdf.set_text_color(0, 0, 0)
         pdf.set_font('Arial', 'B', 11)
         pdf.cell(0, 8, "Description :", 0, 1, 'L')
@@ -189,7 +189,7 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
         pdf.multi_cell(0, 7, description_clean)
         
         # Espacement avant l'image
-        pdf.ln(5)
+        pdf.ln(8)
         
         # Photo de l'observation avec titre
         if obs['photo'] is not None:
@@ -201,19 +201,22 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
             try:
                 with open(temp_obs_path, "wb") as f:
                     f.write(obs['photo'].getvalue())
-                pdf.image(temp_obs_path, x=10, y=pdf.get_y(), w=190)
-                pdf.ln(130)  # Espacement après l'image
+                # Position Y avant l'image
+                current_y = pdf.get_y()
+                # Vérifier si l'image tiendra sur la page actuelle
+                if current_y > 200:  # Si on est trop bas dans la page
+                    pdf.add_page()
+                    current_y = pdf.get_y()
+                pdf.image(temp_obs_path, x=10, y=current_y, w=190)
+                # Déplacer le curseur après l'image
+                pdf.set_y(current_y + 190)  # Espace après l'image
+                pdf.ln(20)  # Espace supplémentaire
             finally:
                 if os.path.exists(temp_obs_path):
                     os.remove(temp_obs_path)
-        
-        # Ligne de séparation entre les observations
-        pdf.ln(5)
-        pdf.set_draw_color(200, 200, 200)  # Gris clair
-        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-        
-        # Vérifier si on a besoin d'une nouvelle page
-        if pdf.get_y() > 250:  # Si on approche du bas de la page
+
+        # Nouvelle page si nécessaire
+        if pdf.get_y() > 250:
             pdf.add_page()
 
     # Page de signature
@@ -238,6 +241,7 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
                 os.remove(temp_sig_path)
     
     return pdf
+    
 # Titre
 st.title("📋 Visite de Copropriété ORPI")
 st.markdown("---")
