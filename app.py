@@ -382,16 +382,14 @@ with col2:
                         "redacteur": redacteur,
                         "arrival_time": arrival_time,
                         "departure_time": departure_time,
-                        "building_code": building_code
+                        "building_code": building_code,
+                        "coproprietaires": coproprietaires
                     }
                     
-                    # Conversion de la signature en image
                     try:
-                        # Convertir le numpy array en image PIL
                         signature_array = signature_canvas.image_data.astype(np.uint8)
                         signature_image = PILImage.fromarray(signature_array)
                         
-                        # Sauvegarder l'image en bytes
                         signature_buffer = BytesIO()
                         signature_image.save(signature_buffer, format="PNG")
                         signature_bytes = signature_buffer.getvalue()
@@ -399,7 +397,7 @@ with col2:
                         pdf = create_pdf(data, main_image, st.session_state.observations, signature_bytes)
                         pdf_output = pdf.output(dest='S').encode('latin1')
                         
-                        if send_pdf_by_email(pdf_output, date.strftime('%Y-%m-%d'), address):
+                        if send_pdf_by_email(pdf_output, date.strftime('%Y-%m-%d'), address, redacteur):
                             st.success("✅ PDF généré et envoyé par email avec succès!")
                         
                         st.download_button(
@@ -413,5 +411,3 @@ with col2:
                         st.error(f"Erreur lors de la génération du PDF: {str(e)}")
         else:
             st.warning("Veuillez remplir au moins l'adresse et le code immeuble.")
-    else:
-        st.warning("Veuillez remplir au moins l'adresse et le code immeuble.")
