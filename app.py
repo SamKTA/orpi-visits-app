@@ -325,9 +325,11 @@ with col2:
         st.session_state.form_key = 0
     
     with st.form(f"observation_form_{st.session_state.form_key}"):
-        obs_type = st.radio("Type d'observation", ["✅ Positive", "❌ Négative"])
-        description = st.text_area("Description")
-        photo = st.file_uploader("Photo de l'observation", type=['png', 'jpg', 'jpeg'])
+    obs_type = st.radio("Type d'observation", ["✅ Positive", "❌ A améliorer"])
+    description = st.text_area("Description")
+    photos = st.file_uploader("Photos de l'observation", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
+    action = st.text_area("Action à mener")
+    priorite = st.selectbox("Priorité de l'action", ["Haute", "Moyenne", "Faible"])
         
         submit_button = st.form_submit_button("Ajouter l'observation")
         if submit_button:
