@@ -106,7 +106,7 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
             self.rect(10, 10, 30, 15, 'F')
             self.set_text_color(255, 255, 255)
             self.set_font('Arial', 'B', 12)
-            self.text(15, 20, 'ORPI')
+            self.text(15, 20, 'ORPI Adimmo')
             
             self.set_text_color(0, 0, 0)
             self.set_font('Arial', 'B', 16)
