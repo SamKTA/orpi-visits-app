@@ -58,14 +58,9 @@ def clean_text_for_pdf(text):
     text = text.replace("✗", "-")
     return text
 
-def send_pdf_by_email(pdf_content, date, address, redacteur):
+def send_pdf_by_email(pdf_content, date, address):
     try:
-        if redacteur == "David SAINT-GERMAIN":
-            recipient_email = "dsaintgermain@orpi.com"
-        elif redacteur == "Elodie BONNAY":
-            recipient_email = "ebonnay@orpi.com"
-        else:  # Samuel Kita Test
-            recipient_email = "skita@orpi.com"
+        recipient_email = "skita@orpi.com"
         
         msg = MIMEMultipart()
         msg['From'] = st.secrets["email"]["sender"]
@@ -293,11 +288,11 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("📝 Informations générales")
     
-    date = st.date_input("Date de la visite", datetime.now(), format="DD/MM/YYYY")
+    date = st.date_input("Date de la visite", datetime.now())
     address = st.text_input("Adresse")
-    redacteur = st.selectbox("Rédacteur", ["David SAINT-GERMAIN", "Elodie BONNAY", "Samuel Kita Test"])
-    coproprietaires = st.text_area("Copropriétaires présents (facultatif)")
+    redacteur = st.selectbox("Rédacteur", ["David SAINT-GERMAIN", "Elodie BONNAY"])
     arrival_time = st.time_input("Heure d'arrivée")
+    departure_time = st.time_input("Heure de départ")
     building_code = st.text_input("Code Immeuble")
     
     main_image = st.file_uploader("Photo principale de la copropriété", type=['png', 'jpg', 'jpeg'])
@@ -330,11 +325,9 @@ with col2:
         st.session_state.form_key = 0
     
     with st.form(f"observation_form_{st.session_state.form_key}"):
-        obs_type = st.radio("Type d'observation", ["✅ Positive", "❌ A améliorer"])
+        obs_type = st.radio("Type d'observation", ["✅ Positive", "❌ Négative"])
         description = st.text_area("Description")
-        photos = st.file_uploader("Photos de l'observation", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
-        action = st.text_area("Action à mener")
-        priorite = st.selectbox("Priorité de l'action", ["Haute", "Moyenne", "Faible"])
+        photo = st.file_uploader("Photo de l'observation", type=['png', 'jpg', 'jpeg'])
         
         submit_button = st.form_submit_button("Ajouter l'observation")
         if submit_button:
@@ -342,9 +335,7 @@ with col2:
                 st.session_state.observations.append({
                     "type": obs_type,
                     "description": description,
-                    "photos": photos,
-                    "action": action,
-                    "priorite": priorite
+                    "photo": photo
                 })
                 st.success("Observation ajoutée avec succès!")
                 st.session_state.form_key += 1
@@ -357,12 +348,8 @@ with col2:
         for idx, obs in enumerate(st.session_state.observations):
             with st.expander(f"Observation {idx + 1} - {obs['type']}"):
                 st.write(obs["description"])
-                if obs["photos"]:
-                    for photo in obs["photos"]:
-                        st.image(photo, caption=f"Photo observation {idx + 1}")
-                if obs["action"]:
-                    st.write(f"Action à mener : {obs['action']}")
-                    st.write(f"Priorité : {obs['priorite']}")
+                if obs["photo"]:
+                    st.image(obs["photo"], caption=f"Photo observation {idx + 1}")
     else:
         st.info("Aucune observation ajoutée pour le moment.")
 
@@ -382,14 +369,16 @@ with col2:
                         "redacteur": redacteur,
                         "arrival_time": arrival_time,
                         "departure_time": departure_time,
-                        "building_code": building_code,
-                        "coproprietaires": coproprietaires
+                        "building_code": building_code
                     }
                     
+                    # Conversion de la signature en image
                     try:
+                        # Convertir le numpy array en image PIL
                         signature_array = signature_canvas.image_data.astype(np.uint8)
                         signature_image = PILImage.fromarray(signature_array)
                         
+                        # Sauvegarder l'image en bytes
                         signature_buffer = BytesIO()
                         signature_image.save(signature_buffer, format="PNG")
                         signature_bytes = signature_buffer.getvalue()
@@ -397,7 +386,7 @@ with col2:
                         pdf = create_pdf(data, main_image, st.session_state.observations, signature_bytes)
                         pdf_output = pdf.output(dest='S').encode('latin1')
                         
-                        if send_pdf_by_email(pdf_output, date.strftime('%Y-%m-%d'), address, redacteur):
+                        if send_pdf_by_email(pdf_output, date.strftime('%Y-%m-%d'), address):
                             st.success("✅ PDF généré et envoyé par email avec succès!")
                         
                         st.download_button(
@@ -411,3 +400,5 @@ with col2:
                         st.error(f"Erreur lors de la génération du PDF: {str(e)}")
         else:
             st.warning("Veuillez remplir au moins l'adresse et le code immeuble.")
+    else:
+        st.warning("Veuillez remplir au moins l'adresse et le code immeuble.")
