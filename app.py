@@ -325,11 +325,11 @@ with col2:
         st.session_state.form_key = 0
     
     with st.form(f"observation_form_{st.session_state.form_key}"):
-    obs_type = st.radio("Type d'observation", ["✅ Positive", "❌ A ameliorer"])
-    description = st.text_area("Description")
-    photos = st.file_uploader("Photos de l'observation", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
-    action = st.text_area("Action à mener")
-    priorite = st.selectbox("Priorité de l'action", ["Haute", "Moyenne", "Faible"])
+        obs_type = st.radio("Type d'observation", ["✅ Positive", "❌ A améliorer"])
+        description = st.text_area("Description")
+        photos = st.file_uploader("Photos de l'observation", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
+        action = st.text_area("Action à mener")
+        priorite = st.selectbox("Priorité de l'action", ["Haute", "Moyenne", "Faible"])
         
         submit_button = st.form_submit_button("Ajouter l'observation")
         if submit_button:
@@ -337,7 +337,9 @@ with col2:
                 st.session_state.observations.append({
                     "type": obs_type,
                     "description": description,
-                    "photo": photo
+                    "photos": photos,
+                    "action": action,
+                    "priorite": priorite
                 })
                 st.success("Observation ajoutée avec succès!")
                 st.session_state.form_key += 1
@@ -350,8 +352,12 @@ with col2:
         for idx, obs in enumerate(st.session_state.observations):
             with st.expander(f"Observation {idx + 1} - {obs['type']}"):
                 st.write(obs["description"])
-                if obs["photo"]:
-                    st.image(obs["photo"], caption=f"Photo observation {idx + 1}")
+                if obs["photos"]:
+                    for photo in obs["photos"]:
+                        st.image(photo, caption=f"Photo observation {idx + 1}")
+                if obs["action"]:
+                    st.write(f"Action à mener : {obs['action']}")
+                    st.write(f"Priorité : {obs['priorite']}")
     else:
         st.info("Aucune observation ajoutée pour le moment.")
 
