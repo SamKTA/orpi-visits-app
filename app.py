@@ -288,11 +288,11 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("📝 Informations générales")
     
-    date = st.date_input("Date de la visite", datetime.now())
+    date = st.date_input("Date de la visite", datetime.now(), format="DD/MM/YYYY")
     address = st.text_input("Adresse")
     redacteur = st.selectbox("Rédacteur", ["David SAINT-GERMAIN", "Elodie BONNAY"])
+    coproprietaires = st.text_area("Copropriétaires présents (facultatif)")
     arrival_time = st.time_input("Heure d'arrivée")
-    departure_time = st.time_input("Heure de départ")
     building_code = st.text_input("Code Immeuble")
     
     main_image = st.file_uploader("Photo principale de la copropriété", type=['png', 'jpg', 'jpeg'])
