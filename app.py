@@ -102,11 +102,11 @@ def send_pdf_by_email(pdf_content, date, address):
 def create_pdf(data, main_image_file, observations, signature_image=None):
     class PDF(FPDF):
         def header(self):
-    self.set_fill_color(227, 31, 43)
-    self.rect(10, 10, 40, 15, 'F')  # Width changée de 30 à 40
-    self.set_text_color(255, 255, 255)
-    self.set_font('Arial', 'B', 12)
-    self.text(12, 20, 'ORPI Adimmo')  # Position X ajustée de 15 à 12
+        self.set_fill_color(227, 31, 43)
+        self.rect(10, 10, 40, 15, 'F')  # Width changée de 30 à 40
+        self.set_text_color(255, 255, 255)
+        self.set_font('Arial', 'B', 12)
+        self.text(12, 20, 'ORPI Adimmo')  # Position X ajustée de 15 à 12
             
             self.set_text_color(0, 0, 0)
             self.set_font('Arial', 'B', 16)
