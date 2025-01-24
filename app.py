@@ -58,9 +58,14 @@ def clean_text_for_pdf(text):
     text = text.replace("✗", "-")
     return text
 
-def send_pdf_by_email(pdf_content, date, address):
+def send_pdf_by_email(pdf_content, date, address, redacteur):
     try:
-        recipient_email = "skita@orpi.com"
+        if redacteur == "David SAINT-GERMAIN":
+            recipient_email = "dsaintgermain@orpi.com"
+        elif redacteur == "Elodie BONNAY":
+            recipient_email = "ebonnay@orpi.com"
+        else:  # Samuel Kita Test
+            recipient_email = "skita@orpi.com"
         
         msg = MIMEMultipart()
         msg['From'] = st.secrets["email"]["sender"]
