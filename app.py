@@ -290,7 +290,7 @@ with col1:
     
     date = st.date_input("Date de la visite", datetime.now(), format="DD/MM/YYYY")
     address = st.text_input("Adresse")
-    redacteur = st.selectbox("Rédacteur", ["David SAINT-GERMAIN", "Elodie BONNAY"])
+    redacteur = st.selectbox("Rédacteur", ["David SAINT-GERMAIN", "Elodie BONNAY", "Samuel Kita Test"])
     coproprietaires = st.text_area("Copropriétaires présents (facultatif)")
     arrival_time = st.time_input("Heure d'arrivée")
     building_code = st.text_input("Code Immeuble")
