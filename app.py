@@ -361,9 +361,9 @@ with col2:
     st.markdown("---")
     col_time1, col_time2 = st.columns(2)
     with col_time1:
-        arrival_time = st.time_input("Heure d'arrivée")
+        arrival_time = st.time_input("Heure d'arrivée", key="arrival_time_input")
     with col_time2:
-        departure_time = st.time_input("Heure de départ")
+        departure_time = st.time_input("Heure de départ", key="departure_time_input")
 
 # Bouton de génération du rapport
 st.markdown("---")
