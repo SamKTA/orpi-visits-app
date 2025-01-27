@@ -100,198 +100,198 @@ def send_pdf_by_email(pdf_content, date, address):
         return False
 
 def create_pdf(data, main_image_file, observations, signature_image=None):
-    class PDF(FPDF):
-        def header(self):
-            self.set_fill_color(227, 31, 43)
-            self.rect(10, 10, 40, 15, 'F')  # Width changée de 30 à 40
-            self.set_text_color(255, 255, 255)
-            self.set_font('Arial', 'B', 12)
-            self.text(12, 20, 'ORPI Adimmo')  # Position X ajustée de 15 à 12
-            
-            self.set_text_color(0, 0, 0)
-            self.set_font('Arial', 'B', 16)
-            self.cell(0, 10, 'RAPPORT DE VISITE', 0, 1, 'C')
-            self.ln(10)
-        
-        def footer(self):
-            self.set_y(-15)
-            self.set_font('Arial', 'I', 8)
-            self.set_text_color(128, 128, 128)
-            self.cell(0, 10, f'Page {self.page_no()}/{{nb}}', 0, 0, 'C')
+   class PDF(FPDF):
+       def header(self):
+           self.set_fill_color(227, 31, 43)
+           self.rect(10, 10, 40, 15, 'F')  # Width changée de 30 à 40
+           self.set_text_color(255, 255, 255)
+           self.set_font('Arial', 'B', 12)
+           self.text(12, 20, 'ORPI Adimmo')  # Position X ajustée de 15 à 12
+           
+           self.set_text_color(0, 0, 0)
+           self.set_font('Arial', 'B', 16)
+           self.cell(0, 10, 'RAPPORT DE VISITE', 0, 1, 'C')
+           self.ln(10)
+       
+       def footer(self):
+           self.set_y(-15)
+           self.set_font('Arial', 'I', 8)
+           self.set_text_color(128, 128, 128)
+           self.cell(0, 10, f'Page {self.page_no()}/{{nb}}', 0, 0, 'C')
 
-    pdf = PDF()
-    pdf.alias_nb_pages()
-    pdf.add_page()
-    
-    # Informations principales
-    pdf.set_fill_color(240, 240, 240)
-    pdf.rect(10, 40, 190, 60, 'F')  # Hauteur augmentée à 60
-    pdf.set_font('Arial', 'B', 12)
-    pdf.set_xy(15, 45)
-    
-    col_width = 90
-    line_height = 8
-    
-    # Mise en page en colonnes
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(25, line_height, 'Date:', 0, 0)
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(65, line_height, f"{data['date']}", 0, 0)
-    
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(35, line_height, 'Rédacteur:', 0, 0)
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(55, line_height, f"{data['redacteur']}", 0, 1)
-    
-    pdf.set_x(15)
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(25, line_height, 'Adresse:', 0, 0)
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(65, line_height, f"{data['address']}", 0, 1)
-    
-    # Heure d'arrivée
-    pdf.set_x(15)
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(35, line_height, "Heure d'arrivée:", 0, 0)
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(65, line_height, f"{data['arrival_time']}", 0, 1)
-    
-    # Heure de départ
-    pdf.set_x(15)
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(35, line_height, "Heure de départ:", 0, 0)
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(65, line_height, f"{data['departure_time']}", 0, 1)
-    
-    pdf.set_x(15)
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(25, line_height, 'Code:', 0, 0)
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(65, line_height, f"{data['building_code']}", 0, 1)
-    
-    # Image principale
-    if main_image_file is not None:
-        temp_image_path = "temp_main_image.jpg"
-        try:
-            # Corriger la rotation
-            corrected_image = fix_image_rotation(main_image_file.getvalue())
-            with open(temp_image_path, "wb") as f:
-                f.write(corrected_image)
-            img = Image.open(temp_image_path)
-            img_w, img_h = img.size
-            aspect = img_h / img_w
-            width = 190
-            height = width * aspect
-            pdf.image(temp_image_path, x=10, y=110, w=width, h=height)  # Y ajusté à 110 pour tenir compte du cadre plus grand
-        finally:
-            if os.path.exists(temp_image_path):
-                os.remove(temp_image_path)
-    
-    # Observations
-    pdf.add_page()
-    pdf.set_font('Arial', 'B', 14)
-    pdf.set_fill_color(227, 31, 43)
-    pdf.set_text_color(255, 255, 255)
-    pdf.cell(0, 10, 'OBSERVATIONS', 1, 1, 'C', True)
-    pdf.set_text_color(0, 0, 0)
-    
-    for idx, obs in enumerate(observations):
-        # Espacement entre les observations
-        pdf.ln(20)  # Augmentation de l'espacement entre les observations
-        
-        # Cadre gris clair pour chaque observation
-        pdf.set_fill_color(245, 245, 245)
-        start_y = pdf.get_y()
-        pdf.rect(10, start_y, 190, 10, 'F')
-        
-        # En-tête de l'observation
-        pdf.set_font('Arial', 'B', 12)
-        obs_type_clean = clean_text_for_pdf(obs['type'])
-        obs_type = "Positive" if "Positive" in obs_type_clean else "A améliorer"  # Changé "Negative" en "A améliorer"
-        if obs_type == "Positive":
-            header_color = (0, 150, 0)  # Vert pour positif
-        else:
-            header_color = (200, 0, 0)  # Rouge pour négatif
-        
-        pdf.set_text_color(*header_color)
-        pdf.set_xy(15, start_y + 2)
-        pdf.cell(0, 8, f"Observation {idx + 1} - {obs_type}", 0, 1, 'L')
-        
-        # Titre "Description :"
-        pdf.ln(8)
-        pdf.set_text_color(0, 0, 0)
-        pdf.set_font('Arial', 'B', 11)
-        pdf.cell(0, 8, "Description :", 0, 1, 'L')
-        
-        # Contenu de la description
-        pdf.set_text_color(0, 0, 0)
-        pdf.set_font('Arial', '', 10)
-        description_clean = clean_text_for_pdf(obs['description'])
-        pdf.multi_cell(0, 7, description_clean)
-        
-        # Espacement avant les images
-        pdf.ln(8)
-        
-        # Photos de l'observation
-        if obs['photos']:  # Changé de 'photo' à 'photos'
-            pdf.set_font('Arial', 'B', 11)
-            pdf.cell(0, 8, "Photos :", 0, 1, 'L')
-            pdf.ln(2)
-            
-            for photo_idx, photo in enumerate(obs['photos']):
-                temp_obs_path = f"temp_obs_{idx}_{photo_idx}.jpg"
-                try:
-                    corrected_image = fix_image_rotation(photo.getvalue())
-                    with open(temp_obs_path, "wb") as f:
-                        f.write(corrected_image)
-                    current_y = pdf.get_y()
-                    if current_y > 200:
-                        pdf.add_page()
-                        current_y = pdf.get_y()
-                    pdf.image(temp_obs_path, x=10, y=current_y, w=190)
-                    pdf.set_y(current_y + 190)
-                    pdf.ln(20)
-                finally:
-                    if os.path.exists(temp_obs_path):
-                        os.remove(temp_obs_path)
+   pdf = PDF()
+   pdf.alias_nb_pages()
+   pdf.add_page()
+   
+   # Informations principales
+   pdf.set_fill_color(240, 240, 240)
+   pdf.rect(10, 40, 190, 60, 'F')  # Hauteur augmentée à 60
+   pdf.set_font('Arial', 'B', 12)
+   pdf.set_xy(15, 45)
+   
+   col_width = 90
+   line_height = 8
+   
+   # Mise en page en colonnes
+   pdf.set_font('Arial', 'B', 10)
+   pdf.cell(25, line_height, 'Date:', 0, 0)
+   pdf.set_font('Arial', '', 10)
+   pdf.cell(65, line_height, f"{data['date']}", 0, 0)
+   
+   pdf.set_font('Arial', 'B', 10)
+   pdf.cell(35, line_height, 'Rédacteur:', 0, 0)
+   pdf.set_font('Arial', '', 10)
+   pdf.cell(55, line_height, f"{data['redacteur']}", 0, 1)
+   
+   pdf.set_x(15)
+   pdf.set_font('Arial', 'B', 10)
+   pdf.cell(25, line_height, 'Adresse:', 0, 0)
+   pdf.set_font('Arial', '', 10)
+   pdf.cell(65, line_height, f"{data['address']}", 0, 1)
+   
+   # Heure d'arrivée
+   pdf.set_x(15)
+   pdf.set_font('Arial', 'B', 10)
+   pdf.cell(35, line_height, "Heure d'arrivée:", 0, 0)
+   pdf.set_font('Arial', '', 10)
+   pdf.cell(65, line_height, f"{data['arrival_time']}", 0, 1)
+   
+   # Heure de départ
+   pdf.set_x(15)
+   pdf.set_font('Arial', 'B', 10)
+   pdf.cell(35, line_height, "Heure de départ:", 0, 0)
+   pdf.set_font('Arial', '', 10)
+   pdf.cell(65, line_height, f"{data['departure_time']}", 0, 1)
+   
+   pdf.set_x(15)
+   pdf.set_font('Arial', 'B', 10)
+   pdf.cell(25, line_height, 'Code:', 0, 0)
+   pdf.set_font('Arial', '', 10)
+   pdf.cell(65, line_height, f"{data['building_code']}", 0, 1)
+   
+   # Image principale
+   if main_image_file is not None:
+       temp_image_path = "temp_main_image.jpg"
+       try:
+           # Corriger la rotation
+           corrected_image = fix_image_rotation(main_image_file.getvalue())
+           with open(temp_image_path, "wb") as f:
+               f.write(corrected_image)
+           img = Image.open(temp_image_path)
+           img_w, img_h = img.size
+           aspect = img_h / img_w
+           width = 190
+           height = width * aspect
+           pdf.image(temp_image_path, x=10, y=110, w=width, h=height)  # Y ajusté à 110 pour tenir compte du cadre plus grand
+       finally:
+           if os.path.exists(temp_image_path):
+               os.remove(temp_image_path)
+   
+   # Observations
+   pdf.add_page()
+   pdf.set_font('Arial', 'B', 14)
+   pdf.set_fill_color(227, 31, 43)
+   pdf.set_text_color(255, 255, 255)
+   pdf.cell(0, 10, 'OBSERVATIONS', 1, 1, 'C', True)
+   pdf.set_text_color(0, 0, 0)
+   
+   for idx, obs in enumerate(observations):
+       # Espacement entre les observations
+       pdf.ln(20)  # Augmentation de l'espacement entre les observations
+       
+       # Cadre gris clair pour chaque observation
+       pdf.set_fill_color(245, 245, 245)
+       start_y = pdf.get_y()
+       pdf.rect(10, start_y, 190, 10, 'F')
+       
+       # En-tête de l'observation
+       pdf.set_font('Arial', 'B', 12)
+       obs_type_clean = clean_text_for_pdf(obs['type'])
+       obs_type = "Positive" if "Positive" in obs_type_clean else "A améliorer"  # Changé "Negative" en "A améliorer"
+       if obs_type == "Positive":
+           header_color = (0, 150, 0)  # Vert pour positif
+       else:
+           header_color = (200, 0, 0)  # Rouge pour négatif
+       
+       pdf.set_text_color(*header_color)
+       pdf.set_xy(15, start_y + 2)
+       pdf.cell(0, 8, f"Observation {idx + 1} - {obs_type}", 0, 1, 'L')
+       
+       # Titre "Description :"
+       pdf.ln(8)
+       pdf.set_text_color(0, 0, 0)
+       pdf.set_font('Arial', 'B', 11)
+       pdf.cell(0, 8, "Description :", 0, 1, 'L')
+       
+       # Contenu de la description
+       pdf.set_text_color(0, 0, 0)
+       pdf.set_font('Arial', '', 10)
+       description_clean = clean_text_for_pdf(obs['description'])
+       pdf.multi_cell(0, 7, description_clean)
+       
+       # Action à mener (si elle existe)
+       if obs.get('action'):
+           pdf.ln(8)
+           pdf.set_text_color(0, 0, 0)
+           pdf.set_font('Arial', 'B', 11)
+           pdf.cell(0, 8, "Action à mener :", 0, 1, 'L')
+           
+           pdf.set_font('Arial', '', 10)
+           action_clean = clean_text_for_pdf(obs['action'])
+           pdf.multi_cell(0, 7, action_clean)
+       
+       # Espacement avant les photos
+       pdf.ln(8)
+       
+       # Photos de l'observation
+       if obs['photos']:  # Changé de 'photo' à 'photos'
+           pdf.set_font('Arial', 'B', 11)
+           pdf.cell(0, 8, "Photos :", 0, 1, 'L')
+           pdf.ln(2)
+           
+           for photo_idx, photo in enumerate(obs['photos']):
+               temp_obs_path = f"temp_obs_{idx}_{photo_idx}.jpg"
+               try:
+                   corrected_image = fix_image_rotation(photo.getvalue())
+                   with open(temp_obs_path, "wb") as f:
+                       f.write(corrected_image)
+                   current_y = pdf.get_y()
+                   if current_y > 200:
+                       pdf.add_page()
+                       current_y = pdf.get_y()
+                   pdf.image(temp_obs_path, x=10, y=current_y, w=190)
+                   pdf.set_y(current_y + 190)
+                   pdf.ln(20)
+               finally:
+                   if os.path.exists(temp_obs_path):
+                       os.remove(temp_obs_path)
 
-        # Nouvelle page si nécessaire
-        if pdf.get_y() > 250:
-            pdf.add_page()
+       # Nouvelle page si nécessaire
+       if pdf.get_y() > 250:
+           pdf.add_page()
 
-    # Ajout de l'action à mener si elle existe
-        if obs.get('action'):  # Vérifie si une action est définie
-            pdf.ln(8)
-            pdf.set_text_color(0, 0, 0)
-            pdf.set_font('Arial', 'B', 11)
-            pdf.cell(0, 8, "Action à mener :", 0, 1, 'L')
-            
-            pdf.set_font('Arial', '', 10)
-            action_clean = clean_text_for_pdf(obs['action'])
-            pdf.multi_cell(0, 7, action_clean)
-
-    # Page de signature
-    pdf.add_page()
-    pdf.set_font('Arial', 'B', 12)
-    pdf.cell(0, 10, "VALIDATION DU RAPPORT", 0, 1, 'C')
-    pdf.ln(5)
-    
-    pdf.set_font('Arial', 'B', 11)
-    pdf.cell(0, 10, data['redacteur'], 0, 1, 'C')
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(0, 5, "Gestionnaire de copropriété", 0, 1, 'C')
-    
-    if signature_image is not None:
-        temp_sig_path = "temp_signature.png"
-        try:
-            with open(temp_sig_path, "wb") as f:
-                f.write(signature_image)
-            pdf.image(temp_sig_path, x=60, y=pdf.get_y() + 10, w=90)
-        finally:
-            if os.path.exists(temp_sig_path):
-                os.remove(temp_sig_path)
-    
-    return pdf
+   # Page de signature
+   pdf.add_page()
+   pdf.set_font('Arial', 'B', 12)
+   pdf.cell(0, 10, "VALIDATION DU RAPPORT", 0, 1, 'C')
+   pdf.ln(5)
+   
+   pdf.set_font('Arial', 'B', 11)
+   pdf.cell(0, 10, data['redacteur'], 0, 1, 'C')
+   pdf.set_font('Arial', '', 10)
+   pdf.cell(0, 5, "Gestionnaire de copropriété", 0, 1, 'C')
+   
+   if signature_image is not None:
+       temp_sig_path = "temp_signature.png"
+       try:
+           with open(temp_sig_path, "wb") as f:
+               f.write(signature_image)
+           pdf.image(temp_sig_path, x=60, y=pdf.get_y() + 10, w=90)
+       finally:
+           if os.path.exists(temp_sig_path):
+               os.remove(temp_sig_path)
+   
+   return pdf
     
 # Titre
 st.title("📋 Visite de Copropriété ORPI")
