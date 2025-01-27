@@ -207,7 +207,7 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
         # En-tête de l'observation
         pdf.set_font('Arial', 'B', 12)
         obs_type_clean = clean_text_for_pdf(obs['type'])
-        obs_type = "Positive" if "Positive" in obs_type_clean else "Negative"
+        obs_type = "Positive" if "Positive" in obs_type_clean else "A améliorer"  # Changé "Negative" en "A améliorer"
         if obs_type == "Positive":
             header_color = (0, 150, 0)  # Vert pour positif
         else:
@@ -229,32 +229,31 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
         description_clean = clean_text_for_pdf(obs['description'])
         pdf.multi_cell(0, 7, description_clean)
         
-        # Espacement avant l'image
+        # Espacement avant les images
         pdf.ln(8)
         
-        # Photo de l'observation avec titre
-        if obs['photo'] is not None:
+        # Photos de l'observation
+        if obs['photos']:  # Changé de 'photo' à 'photos'
             pdf.set_font('Arial', 'B', 11)
-            pdf.cell(0, 8, "Photo :", 0, 1, 'L')
+            pdf.cell(0, 8, "Photos :", 0, 1, 'L')
             pdf.ln(2)
             
-            temp_obs_path = f"temp_obs_{idx}.jpg"
-            try:
-                # Corriger la rotation
-                corrected_image = fix_image_rotation(obs['photo'].getvalue())
-                with open(temp_obs_path, "wb") as f:
-                    f.write(corrected_image)
-                current_y = pdf.get_y()
-                if current_y > 200:  # Si on est trop bas dans la page
-                    pdf.add_page()
+            for photo_idx, photo in enumerate(obs['photos']):
+                temp_obs_path = f"temp_obs_{idx}_{photo_idx}.jpg"
+                try:
+                    corrected_image = fix_image_rotation(photo.getvalue())
+                    with open(temp_obs_path, "wb") as f:
+                        f.write(corrected_image)
                     current_y = pdf.get_y()
-                pdf.image(temp_obs_path, x=10, y=current_y, w=190)
-                # Déplacer le curseur après l'image
-                pdf.set_y(current_y + 190)  # Espace après l'image
-                pdf.ln(20)  # Espace supplémentaire
-            finally:
-                if os.path.exists(temp_obs_path):
-                    os.remove(temp_obs_path)
+                    if current_y > 200:
+                        pdf.add_page()
+                        current_y = pdf.get_y()
+                    pdf.image(temp_obs_path, x=10, y=current_y, w=190)
+                    pdf.set_y(current_y + 190)
+                    pdf.ln(20)
+                finally:
+                    if os.path.exists(temp_obs_path):
+                        os.remove(temp_obs_path)
 
         # Nouvelle page si nécessaire
         if pdf.get_y() > 250:
