@@ -339,31 +339,31 @@ with col2:
         st.session_state.form_key = 0
     
     with st.form(f"observation_form_{st.session_state.form_key}"):
-    obs_type = st.radio("Type d'observation", ["✅ Positive", "❌ A améliorer"])
-    description = st.text_area("Description")
-    photos = st.file_uploader("Photos de l'observation (maximum 3)", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
-    if photos and len(photos) > 3:
-        st.error("Vous ne pouvez pas ajouter plus de 3 photos par observation")
-    
-    action = st.text_area("Action à mener (facultatif)")
-    
-    submit_button = st.form_submit_button("Ajouter l'observation")
-    if submit_button:
-        if description:
-            if not photos or len(photos) <= 3:
-                st.session_state.observations.append({
-                    "type": obs_type,
-                    "description": description,
-                    "photos": photos,
-                    "action": action
-                })
-                st.success("Observation ajoutée avec succès!")
-                st.session_state.form_key += 1
-                st.experimental_rerun()
+        obs_type = st.radio("Type d'observation", ["✅ Positive", "❌ A améliorer"])
+        description = st.text_area("Description")
+        photos = st.file_uploader("Photos de l'observation (maximum 3)", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
+        if photos and len(photos) > 3:
+            st.error("Vous ne pouvez pas ajouter plus de 3 photos par observation")
+        
+        action = st.text_area("Action à mener (facultatif)")
+        
+        submit_button = st.form_submit_button("Ajouter l'observation")
+        if submit_button:
+            if description:
+                if not photos or len(photos) <= 3:
+                    st.session_state.observations.append({
+                        "type": obs_type,
+                        "description": description,
+                        "photos": photos,
+                        "action": action
+                    })
+                    st.success("Observation ajoutée avec succès!")
+                    st.session_state.form_key += 1
+                    st.experimental_rerun()
+                else:
+                    st.error("Veuillez sélectionner au maximum 3 photos")
             else:
-                st.error("Veuillez sélectionner au maximum 3 photos")
-        else:
-            st.error("Veuillez ajouter une description à votre observation.")
+                st.error("Veuillez ajouter une description à votre observation.")
 
     if st.session_state.observations:
         st.markdown("### 📋 Liste des observations")
