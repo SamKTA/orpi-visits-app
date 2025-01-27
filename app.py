@@ -358,8 +358,9 @@ with col2:
         for idx, obs in enumerate(st.session_state.observations):
             with st.expander(f"Observation {idx + 1} - {obs['type']}"):
                 st.write(obs["description"])
-                if obs["photo"]:
-                    st.image(obs["photo"], caption=f"Photo observation {idx + 1}")
+                if obs["photos"]:
+                    for photo in obs["photos"]:
+                        st.image(photo, caption=f"Photo observation {idx + 1}")
     else:
         st.info("Aucune observation ajoutée pour le moment.")
 
