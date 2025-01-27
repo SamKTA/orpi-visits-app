@@ -359,11 +359,11 @@ with col2:
         st.info("Aucune observation ajoutée pour le moment.")
 
     st.markdown("---")
-        col_time1, col_time2 = st.columns(2)
-        with col_time1:
-            arrival_time = st.time_input("Heure d'arrivée")
-        with col_time2:
-            departure_time = st.time_input("Heure de départ")
+    col_time1, col_time2 = st.columns(2)
+    with col_time1:
+        arrival_time = st.time_input("Heure d'arrivée")
+    with col_time2:
+        departure_time = st.time_input("Heure de départ")
 
 # Bouton de génération du rapport
 st.markdown("---")
