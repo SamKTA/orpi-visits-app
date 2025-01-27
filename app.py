@@ -259,6 +259,17 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
         if pdf.get_y() > 250:
             pdf.add_page()
 
+    # Ajout de l'action à mener si elle existe
+        if obs.get('action'):  # Vérifie si une action est définie
+            pdf.ln(8)
+            pdf.set_text_color(0, 0, 0)
+            pdf.set_font('Arial', 'B', 11)
+            pdf.cell(0, 8, "Action à mener :", 0, 1, 'L')
+            
+            pdf.set_font('Arial', '', 10)
+            action_clean = clean_text_for_pdf(obs['action'])
+            pdf.multi_cell(0, 7, action_clean)
+
     # Page de signature
     pdf.add_page()
     pdf.set_font('Arial', 'B', 12)
