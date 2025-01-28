@@ -125,7 +125,7 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
    
    # Informations principales
    pdf.set_fill_color(240, 240, 240)
-   pdf.rect(10, 40, 190, 60, 'F')  # Hauteur augmentée à 60
+   pdf.rect(10, 40, 190, 70, 'F')  # Hauteur augmentée pour personnes présentes
    pdf.set_font('Arial', 'B', 12)
    pdf.set_xy(15, 45)
    
@@ -168,6 +168,14 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
    pdf.cell(25, line_height, 'Code:', 0, 0)
    pdf.set_font('Arial', '', 10)
    pdf.cell(65, line_height, f"{data['building_code']}", 0, 1)
+
+   # Ajout des personnes présentes
+   if data.get('personnes_presentes'):  # Vérifie si le champ n'est pas vide
+       pdf.set_x(15)
+       pdf.set_font('Arial', 'B', 10)
+       pdf.cell(45, line_height, 'Personnes présentes:', 0, 0)
+       pdf.set_font('Arial', '', 10)
+       pdf.multi_cell(0, line_height, f"{data['personnes_presentes']}")
    
    # Image principale
    if main_image_file is not None:
@@ -182,7 +190,7 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
            aspect = img_h / img_w
            width = 190
            height = width * aspect
-           pdf.image(temp_image_path, x=10, y=110, w=width, h=height)  # Y ajusté à 110 pour tenir compte du cadre plus grand
+           pdf.image(temp_image_path, x=10, y=120, w=width, h=height)  # Y ajusté pour tenir compte des personnes présentes
        finally:
            if os.path.exists(temp_image_path):
                os.remove(temp_image_path)
