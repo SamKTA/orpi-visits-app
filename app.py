@@ -303,9 +303,10 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("📝 Informations générales")
     
-    date = st.date_input("Date de la visite", datetime.now())
+    date = st.date_input("Date de la visite", datetime.now(), format="DD/MM/YYYY")
     address = st.text_input("Adresse")
     redacteur = st.selectbox("Rédacteur", ["David SAINT-GERMAIN", "Elodie BONNAY", "Samuel KITA test"])
+    personnes_presentes = st.text_area("Personnes présentes")  # Ajout de ce champ
     arrival_time = st.time_input("Heure d'arrivée")
     building_code = st.text_input("Code Immeuble")
     
