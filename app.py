@@ -394,6 +394,7 @@ with col2:
                         "date": date,
                         "address": address,
                         "redacteur": redacteur,
+                        "personnes_presentes": personnes_presentes,
                         "arrival_time": arrival_time,
                         "departure_time": departure_time,
                         "building_code": building_code
