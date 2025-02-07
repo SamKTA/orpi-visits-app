@@ -45,17 +45,59 @@ st.set_page_config(page_title="Visite de Copropriété ORPI", layout="wide")
 
 def clean_text_for_pdf(text):
     text = str(text)
-    text = text.replace("✅", "+")  
-    text = text.replace("❌", "-")  
-    text = text.replace("'", "'")
-    text = text.replace(""", '"')
-    text = text.replace(""", '"')
-    text = text.replace("é", "e")
-    text = text.replace("è", "e")
-    text = text.replace("à", "a")
-    text = text.replace("ê", "e")
-    text = text.replace("✓", "+")
-    text = text.replace("✗", "-")
+    # Caractères spéciaux et leurs remplacements
+    replacements = {
+        "✅": "+",
+        "❌": "-",
+        "'": "'",
+        "'": "'",
+        """: '"',
+        """: '"',
+        "é": "e",
+        "è": "e",
+        "à": "a",
+        "ê": "e",
+        "û": "u",
+        "ô": "o",
+        "î": "i",
+        "ï": "i",
+        "ë": "e",
+        "ü": "u",
+        "ç": "c",
+        "œ": "oe",
+        "æ": "ae",
+        "â": "a",
+        "É": "E",
+        "È": "E",
+        "À": "A",
+        "Ê": "E",
+        "Û": "U",
+        "Ô": "O",
+        "Î": "I",
+        "Ï": "I",
+        "Ë": "E",
+        "Ü": "U",
+        "Ç": "C",
+        "Â": "A",
+        "…": "...",
+        "—": "-",
+        "–": "-",
+        "'": "'",
+        "°": " degres ",
+        "²": "2",
+        "€": "EUR",
+        "\u2019": "'",  # apostrophe courbe
+        "\u2018": "'",  # autre apostrophe
+        "\u2013": "-",  # tiret demi-cadratin
+        "\u2014": "-",  # tiret cadratin
+        "\u2026": "...", # points de suspension
+    }
+    
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    
+    # Supprimer tous les autres caractères non-ASCII qui pourraient causer des problèmes
+    text = ''.join(char if ord(char) < 128 else ' ' for char in text)
     return text
 
 def send_pdf_by_email(pdf_content, date, address):
