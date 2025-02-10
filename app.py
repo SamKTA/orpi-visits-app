@@ -397,7 +397,7 @@ with col2:
     with st.form(f"observation_form_{st.session_state.form_key}"):
         obs_type = st.radio("Type d'observation", ["✅ Positive", "❌ A améliorer"])
         description = st.text_area("Description")
-        photos = st.file_uploader("Photos de l'observation (maximum 3)", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
+        photos = st.file_uploader("Photos de l'observation (maximum 3)", type=['png', 'jpg', 'jpeg', 'heic', 'HEIC'], accept_multiple_files=True)
         if photos and len(photos) > 3:
             st.error("Vous ne pouvez pas ajouter plus de 3 photos par observation")
         
