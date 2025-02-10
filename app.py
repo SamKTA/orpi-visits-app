@@ -20,29 +20,36 @@ from pillow_heif import register_heif_opener
 register_heif_opener()
 
 def fix_image_rotation(image_data):
-    # Convertir les bytes en image PIL
-    img = Image.open(BytesIO(image_data))
-    
-    try:
-        # Obtenir l'orientation EXIF
-        exif = img._getexif()
-        if exif is not None:
-            orientation = exif.get(274)  # 274 est le tag pour l'orientation
-            if orientation == 3:
-                img = img.rotate(180, expand=True)
-            elif orientation == 6:
-                img = img.rotate(270, expand=True)
-            elif orientation == 8:
-                img = img.rotate(90, expand=True)
-    except:
-        # Si pas d'information EXIF, on force la rotation selon les dimensions
-        if img.width < img.height:
-            img = img.rotate(270, expand=True)
-    
-    # Sauvegarder l'image corrigée
-    output_buffer = BytesIO()
-    img.save(output_buffer, format='JPEG')
-    return output_buffer.getvalue()
+   try:
+       img = Image.open(BytesIO(image_data))
+       
+       # Si c'est une image HEIC, elle est déjà convertie en PIL Image par pillow-heif
+       
+       try:
+           exif = img._getexif()
+           if exif is not None:
+               orientation = exif.get(274)  # 274 est le tag pour l'orientation
+               if orientation == 3:
+                   img = img.rotate(180, expand=True)
+               elif orientation == 6:
+                   img = img.rotate(270, expand=True)
+               elif orientation == 8:
+                   img = img.rotate(90, expand=True)
+       except:
+           if img.width < img.height:
+               img = img.rotate(270, expand=True)
+       
+       # Conversion en JPEG pour la compatibilité PDF
+       output_buffer = BytesIO()
+       if img.mode in ('RGBA', 'LA'):
+           background = Image.new(img.mode[:-1], img.size, 'white')
+           background.paste(img, img.split()[-1])
+           img = background
+       img.convert('RGB').save(output_buffer, format='JPEG', quality=85)
+       return output_buffer.getvalue()
+   except Exception as e:
+       st.error(f"Erreur lors du traitement de l'image : {str(e)}")
+       return None
 
 # Configuration de la page
 st.set_page_config(page_title="Visite de Copropriété ORPI", layout="wide")
