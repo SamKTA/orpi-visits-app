@@ -14,8 +14,6 @@ from email.mime.application import MIMEApplication
 from streamlit_drawable_canvas import st_canvas
 import base64
 from io import BytesIO
-from pillow_heif import register_heif_opener
-register_heif_opener()
 
 def fix_image_rotation(image_data):
     # Convertir les bytes en image PIL
