@@ -364,9 +364,10 @@ with col1:
     arrival_time = st.time_input("Heure d'arrivée")
     building_code = st.text_input("Code Immeuble")
     
-    main_image = st.file_uploader("Photo principale de la copropriété", type=['png', 'jpg', 'jpeg'])
-    if main_image:
-        st.image(main_image, caption="Photo principale", use_column_width=True)
+    main_image = st.file_uploader("Photo principale de la copropriété", 
+    type=['png', 'jpg', 'jpeg', 'heic', 'HEIC'])
+if main_image:
+    st.image(main_image, caption="Photo principale", use_column_width=True)
 
     # Ajout du canvas de signature
     st.markdown("### ✍️ Signature")
