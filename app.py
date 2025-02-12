@@ -15,18 +15,6 @@ from streamlit_drawable_canvas import st_canvas
 import base64
 from io import BytesIO
 
-if    'observations' not in st.session_state:
-      st.session_state.observations = []
-
-if    'editing_observation' not in st.session_state:
-      st.session_state.editing_observation = None
-
-if    'form_key' not in st.session_state:
-      st.session_state.form_key = 0
-
-# Configuration de la page
-st.set_page_config(page_title="Visite de Copropriété ORPI", layout="wide")
-
 # Ajout du support HEIC
 from pillow_heif import register_heif_opener
 register_heif_opener()
@@ -441,52 +429,13 @@ with col2:
                 st.error("Veuillez ajouter une description à votre observation.")
 
     if st.session_state.observations:
-    st.markdown("### 📋 Liste des observations")
-    for idx, obs in enumerate(st.session_state.observations):
-        with st.expander(f"Observation {idx + 1} - {obs['type']}"):
-            st.write("Description actuelle :", obs["description"])
-            if obs["photos"]:
-                for photo in obs["photos"]:
-                    st.image(photo, caption=f"Photo observation {idx + 1}")
-            if obs.get('action'):
-                st.write("Action à mener :", obs["action"])
-            
-            # Boutons de modification et suppression
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button(f"Modifier l'observation {idx + 1}", key=f"mod_{idx}"):
-                    st.session_state.editing_observation = idx
-                    st.session_state.form_key += 1  # Force le formulaire à se réinitialiser
-            with col2:
-                if st.button(f"Supprimer l'observation {idx + 1}", key=f"del_{idx}"):
-                    st.session_state.observations.pop(idx)
-                    st.experimental_rerun()
-
-            # Formulaire de modification si cette observation est en cours d'édition
-            if hasattr(st.session_state, 'editing_observation') and st.session_state.editing_observation == idx:
-                with st.form(f"edit_observation_form_{idx}"):
-                    new_type = st.radio("Type d'observation", ["✅ Positive", "❌ A améliorer"], 
-                                      index=0 if "Positive" in obs['type'] else 1,
-                                      key=f"edit_type_{idx}")
-                    new_description = st.text_area("Description", value=obs['description'], key=f"edit_desc_{idx}")
-                    new_photos = st.file_uploader("Photos de l'observation (maximum 3)", 
-                                                type=['png', 'jpg', 'jpeg', 'heic', 'HEIC'], 
-                                                accept_multiple_files=True,
-                                                key=f"edit_photos_{idx}")
-                    new_action = st.text_area("Action à mener (facultatif)", 
-                                            value=obs.get('action', ''),
-                                            key=f"edit_action_{idx}")
-                    
-                    if st.form_submit_button("Enregistrer les modifications"):
-                        if new_description:
-                            st.session_state.observations[idx] = {
-                                "type": new_type,
-                                "description": new_description,
-                                "photos": new_photos if new_photos else obs['photos'],
-                                "action": new_action
-                            }
-                            del st.session_state.editing_observation
-                            st.experimental_rerun()
+        st.markdown("### 📋 Liste des observations")
+        for idx, obs in enumerate(st.session_state.observations):
+            with st.expander(f"Observation {idx + 1} - {obs['type']}"):
+                st.write(obs["description"])
+                if obs["photos"]:
+                    for photo in obs["photos"]:
+                        st.image(photo, caption=f"Photo observation {idx + 1}")
     else:
         st.info("Aucune observation ajoutée pour le moment.")
 
