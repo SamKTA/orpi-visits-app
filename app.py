@@ -15,6 +15,9 @@ from streamlit_drawable_canvas import st_canvas
 import base64
 from io import BytesIO
 
+if 'editing_idx' not in st.session_state:
+    st.session_state.editing_idx = None
+
 # Ajout du support HEIC
 from pillow_heif import register_heif_opener
 register_heif_opener()
