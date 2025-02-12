@@ -15,14 +15,14 @@ from streamlit_drawable_canvas import st_canvas
 import base64
 from io import BytesIO
 
-if 'observations' not in st.session_state:
-    st.session_state.observations = []
+if    'observations' not in st.session_state:
+      st.session_state.observations = []
 
-if 'editing_observation' not in st.session_state:
-    st.session_state.editing_observation = None
+if    'editing_observation' not in st.session_state:
+      st.session_state.editing_observation = None
 
-if 'form_key' not in st.session_state:
-    st.session_state.form_key = 0
+if    'form_key' not in st.session_state:
+      st.session_state.form_key = 0
 
 # Configuration de la page
 st.set_page_config(page_title="Visite de Copropriété ORPI", layout="wide")
