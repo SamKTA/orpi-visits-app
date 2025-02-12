@@ -432,9 +432,9 @@ with col2:
                 st.error("Veuillez ajouter une description à votre observation.")
 
     if st.session_state.observations:
-    st.markdown("### 📋 Liste des observations")
-    for idx, obs in enumerate(st.session_state.observations):
-        with st.expander(f"Observation {idx + 1} - {obs['type']}"):
+        st.markdown("### 📋 Liste des observations")
+          for idx, obs in enumerate(st.session_state.observations):
+            with st.expander(f"Observation {idx + 1} - {obs['type']}"):
             if st.session_state.editing_idx == idx:
                 # Mode édition
                 new_type = st.radio(
