@@ -432,10 +432,60 @@ with col2:
         st.markdown("### 📋 Liste des observations")
         for idx, obs in enumerate(st.session_state.observations):
             with st.expander(f"Observation {idx + 1} - {obs['type']}"):
-                st.write(obs["description"])
+                # Affichage des détails actuels
+                st.write("Description actuelle :", obs["description"])
+                if obs.get('action'):
+                    st.write("Action à mener actuelle :", obs["action"])
                 if obs["photos"]:
+                    st.write("Photos actuelles :")
                     for photo in obs["photos"]:
                         st.image(photo, caption=f"Photo observation {idx + 1}")
+                
+                # Boutons de modification et suppression
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("Modifier", key=f"mod_{idx}"):
+                        # Formulaire de modification
+                        st.markdown("### Modifier l'observation")
+                        new_type = st.radio(
+                            "Type d'observation", 
+                            ["✅ Positive", "❌ A améliorer"],
+                            index=0 if "Positive" in obs['type'] else 1,
+                            key=f"edit_type_{idx}"
+                        )
+                        new_description = st.text_area(
+                            "Description",
+                            value=obs['description'],
+                            key=f"edit_desc_{idx}"
+                        )
+                        new_photos = st.file_uploader(
+                            "Photos (maximum 3)",
+                            type=['png', 'jpg', 'jpeg', 'heic', 'HEIC'],
+                            accept_multiple_files=True,
+                            key=f"edit_photos_{idx}"
+                        )
+                        new_action = st.text_area(
+                            "Action à mener (facultatif)",
+                            value=obs.get('action', ''),
+                            key=f"edit_action_{idx}"
+                        )
+                        
+                        if st.button("Enregistrer les modifications", key=f"save_{idx}"):
+                            if new_description:
+                                st.session_state.observations[idx] = {
+                                    "type": new_type,
+                                    "description": new_description,
+                                    "photos": new_photos if new_photos else obs['photos'],
+                                    "action": new_action
+                                }
+                                st.success("Modification enregistrée!")
+                                st.experimental_rerun()
+                
+                with col2:
+                    if st.button("Supprimer", key=f"del_{idx}"):
+                        st.session_state.observations.pop(idx)
+                        st.success("Observation supprimée!")
+                        st.experimental_rerun()
     else:
         st.info("Aucune observation ajoutée pour le moment.")
 
