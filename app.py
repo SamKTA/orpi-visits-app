@@ -19,6 +19,9 @@ from io import BytesIO
 from pillow_heif import register_heif_opener
 register_heif_opener()
 
+if 'editing_idx' not in st.session_state:
+    st.session_state.editing_idx = None
+
 def fix_image_rotation(image_data):
    try:
        img = Image.open(BytesIO(image_data))
