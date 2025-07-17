@@ -323,7 +323,7 @@ def create_pdf(data, main_image_file, observations, signature_image=None):
                    if current_y > 200:
                        pdf.add_page()
                        current_y = pdf.get_y()
-                   pdf.image(temp_obs_path, x=10, y=current_y, w=190)
+                   pdf.image(temp_obs_path, x=10, y=current_y, w=100)
                    pdf.set_y(current_y + 190)
                    pdf.ln(20)
                finally:
@@ -371,7 +371,7 @@ with col1:
     address = st.text_input("Adresse")
     redacteur = st.selectbox("Rédacteur", ["David SAINT-GERMAIN", "Elodie BONNAY", "Samuel KITA test"])
     personnes_presentes = st.text_area("Personnes présentes")  # Ajout de ce champ
-    arrival_time = st.time_input("Heure d'arrivée")
+    arrival_time = st.text_input("Heure d'arrivée (ex: 09h00)")
     building_code = st.text_input("Code Immeuble")
     
     main_image = st.file_uploader("Photo principale de la copropriété", 
@@ -497,7 +497,7 @@ with col2:
         st.info("Aucune observation ajoutée pour le moment.")
 
     st.markdown("---")
-    departure_time = st.time_input("Heure de départ")
+    departure_time = st.text_input("Heure de départ (ex: 10h30)")
 
 # Bouton de génération du rapport
 st.markdown("---")
